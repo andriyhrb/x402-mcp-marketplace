@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use crate::state::MarketplaceConfig;
+use crate::errors::MarketError;
 use crate::constants::MARKETPLACE_SEED;
 
 #[derive(Accounts)]
@@ -19,6 +20,7 @@ pub struct Initialize<'info> {
 }
 
 pub fn handler(ctx: Context<Initialize>, commission_bps: u16) -> Result<()> {
+    require!(commission_bps <= 10_000, MarketError::InvalidCommission);
     let config = &mut ctx.accounts.config;
     config.authority = ctx.accounts.authority.key();
     config.treasury = ctx.accounts.authority.key();

@@ -41,6 +41,8 @@ pub fn handler(
     price_per_call: u64,
 ) -> Result<()> {
     require!(name.len() <= MAX_NAME_LEN, MarketError::NameTooLong);
+    require!(description.len() <= MAX_DESCRIPTION_LEN, MarketError::DescriptionTooLong);
+    require!(endpoint_url.len() <= MAX_URL_LEN, MarketError::EndpointTooLong);
 
     let clock = Clock::get()?;
     let tool = &mut ctx.accounts.tool;
@@ -63,7 +65,9 @@ pub fn handler(
     ctx.accounts.config.total_tools = ctx.accounts.config.total_tools
         .checked_add(1)
         .ok_or(MarketError::MathOverflow)?;
-    ctx.accounts.profile.total_tools += 1;
+    ctx.accounts.profile.total_tools = ctx.accounts.profile.total_tools
+        .checked_add(1)
+        .ok_or(MarketError::MathOverflow)?;
 
     Ok(())
 }

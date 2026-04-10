@@ -25,11 +25,23 @@ pub struct PayForTool<'info> {
         bump,
     )]
     pub payment: Account<'info, PaymentRecord>,
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = caller_token.owner == caller.key() @ MarketError::Unauthorized,
+        constraint = caller_token.mint == config.usdc_mint @ MarketError::InvalidMint,
+    )]
     pub caller_token: Account<'info, TokenAccount>,
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = publisher_token.owner == tool.publisher @ MarketError::Unauthorized,
+        constraint = publisher_token.mint == config.usdc_mint @ MarketError::InvalidMint,
+    )]
     pub publisher_token: Account<'info, TokenAccount>,
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = treasury_token.owner == config.treasury @ MarketError::Unauthorized,
+        constraint = treasury_token.mint == config.usdc_mint @ MarketError::InvalidMint,
+    )]
     pub treasury_token: Account<'info, TokenAccount>,
     #[account(mut)]
     pub caller: Signer<'info>,
@@ -54,28 +66,7 @@ pub fn handler(ctx: Context<PayForTool>, payment_id: u64, num_calls: u32) -> Res
         .checked_sub(commission)
         .ok_or(MarketError::MathOverflow)?;
 
-    // transfer to publisher
-    token::transfer(
-        CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
-            from: ctx.accounts.caller_token.to_account_info(),
-            to: ctx.accounts.publisher_token.to_account_info(),
-            authority: ctx.accounts.caller.to_account_info(),
-        }),
-        publisher_amount,
-    )?;
-
-    // transfer commission to treasury
-    if commission > 0 {
-        token::transfer(
-            CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
-                from: ctx.accounts.caller_token.to_account_info(),
-                to: ctx.accounts.treasury_token.to_account_info(),
-                authority: ctx.accounts.caller.to_account_info(),
-            }),
-            commission,
-        )?;
-    }
-
+    // state updates BEFORE CPI
     let clock = Clock::get()?;
     let payment = &mut ctx.accounts.payment;
     payment.tool = ctx.accounts.tool.key();
@@ -90,6 +81,28 @@ pub fn handler(ctx: Context<PayForTool>, payment_id: u64, num_calls: u32) -> Res
     let tool = &mut ctx.accounts.tool;
     tool.total_calls = tool.total_calls.checked_add(num_calls as u64).ok_or(MarketError::MathOverflow)?;
     tool.total_revenue = tool.total_revenue.checked_add(total_amount).ok_or(MarketError::MathOverflow)?;
+
+    // CPI: transfer to publisher
+    token::transfer(
+        CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
+            from: ctx.accounts.caller_token.to_account_info(),
+            to: ctx.accounts.publisher_token.to_account_info(),
+            authority: ctx.accounts.caller.to_account_info(),
+        }),
+        publisher_amount,
+    )?;
+
+    // CPI: transfer commission to treasury
+    if commission > 0 {
+        token::transfer(
+            CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
+                from: ctx.accounts.caller_token.to_account_info(),
+                to: ctx.accounts.treasury_token.to_account_info(),
+                authority: ctx.accounts.caller.to_account_info(),
+            }),
+            commission,
+        )?;
+    }
 
     Ok(())
 }
