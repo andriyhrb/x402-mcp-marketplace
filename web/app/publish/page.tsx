@@ -14,7 +14,6 @@ export default function PublishPage() {
   const [price, setPrice] = useState('0.001');
   const [category, setCategory] = useState('Data');
   const [publishStatus, setPublishStatus] = useState<PublishStatus>('idle');
-  const [toolSlug, setToolSlug] = useState('');
 
   const canPublish = connected && name.trim() && description.trim() && endpoint.trim();
 
@@ -27,7 +26,6 @@ export default function PublishPage() {
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    setToolSlug(slug);
 
     // Save to localStorage so it appears on marketplace
     const newTool = {
@@ -84,14 +82,7 @@ export default function PublishPage() {
             </div>
             <div>
               <div className="text-xs text-gray-400">Transaction</div>
-              <a
-                href={`https://explorer.solana.com/tx/${toolSlug}?cluster=devnet`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline font-mono"
-              >
-                {toolSlug.slice(0, 16)}...devnet
-              </a>
+              <span className="text-sm text-gray-500 italic">Transaction simulated (devnet demo)</span>
             </div>
           </div>
         </div>
