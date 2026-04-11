@@ -28,6 +28,22 @@ export default function PublishPage() {
 
     const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     setToolSlug(slug);
+
+    // Save to localStorage so it appears on marketplace
+    const newTool = {
+      id: slug,
+      name: name.trim(),
+      description: description.trim(),
+      category,
+      pricePerCall: parseFloat(price) || 0.001,
+      totalCalls: 0,
+      rating: 0,
+      publisher: walletAddress ? walletAddress.slice(0, 4) + '...' + walletAddress.slice(-4) : 'unknown',
+    };
+    const existing = JSON.parse(localStorage.getItem('x402_published_tools') || '[]');
+    existing.push(newTool);
+    localStorage.setItem('x402_published_tools', JSON.stringify(existing));
+
     setPublishStatus('success');
   };
 

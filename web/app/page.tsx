@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface Tool {
@@ -30,8 +30,16 @@ const CATEGORIES = ['All', 'Data', 'DeFi', 'Developer', 'NFT', 'Analytics', 'Sec
 export default function MarketplacePage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [allTools, setAllTools] = useState<Tool[]>(DEMO_TOOLS);
 
-  const filtered = DEMO_TOOLS.filter((t) => {
+  useEffect(() => {
+    const published = JSON.parse(localStorage.getItem('x402_published_tools') || '[]') as Tool[];
+    if (published.length > 0) {
+      setAllTools([...published, ...DEMO_TOOLS]);
+    }
+  }, []);
+
+  const filtered = allTools.filter((t) => {
     const matchSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.description.toLowerCase().includes(search.toLowerCase());
     const matchCat = activeCategory === 'All' || t.category === activeCategory;
     return matchSearch && matchCat;
