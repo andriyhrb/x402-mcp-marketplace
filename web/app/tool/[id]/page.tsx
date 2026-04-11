@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 interface Tool {
   id: string;
@@ -32,12 +33,17 @@ const TOOLS: Record<string, Tool> = {
   },
 };
 
+type RunStatus = 'idle' | 'loading' | 'success' | 'wallet-required';
+
 export default function ToolDetailPage() {
   const params = useParams();
   const toolId = params.id as string;
   const tool = TOOLS[toolId];
+  const { publicKey, connected } = useWallet();
   const [tryInput, setTryInput] = useState('');
   const [tryOutput, setTryOutput] = useState('');
+  const [runStatus, setRunStatus] = useState<RunStatus>('idle');
+  const [gatewayOffline, setGatewayOffline] = useState(false);
 
   if (!tool) {
     return (
@@ -49,9 +55,49 @@ export default function ToolDetailPage() {
     );
   }
 
-  const handleTry = () => {
-    setTryOutput(tool.exampleOutput);
+  const handleRun = async () => {
+    if (!connected) {
+      setRunStatus('wallet-required');
+      setTryOutput('');
+      return;
+    }
+
+    setRunStatus('loading');
+    setTryOutput('');
+    setGatewayOffline(false);
+
+    try {
+      const inputPayload = tryInput || tool.exampleInput;
+      const parsedInput = JSON.parse(inputPayload);
+
+      const response = await fetch(`/api/tools/${toolId}/call`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-caller-pubkey': publicKey?.toBase58() || '',
+        },
+        body: JSON.stringify(parsedInput),
+      });
+
+      if (!response.ok) throw new Error('gateway_error');
+
+      const result = await response.json();
+      setTryOutput(JSON.stringify(result, null, 2));
+      setRunStatus('success');
+    } catch {
+      setGatewayOffline(true);
+      setTryOutput(tool.exampleOutput);
+      setRunStatus('success');
+    }
   };
+
+  const callerAddress = publicKey?.toBase58() || '<your_pubkey>';
+
+  const runButtonLabel = (() => {
+    if (runStatus === 'loading') return 'Running...';
+    if (!connected) return `Run (costs ${tool.pricePerCall} USDC)`;
+    return `Run demo (${tool.pricePerCall} USDC)`;
+  })();
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
@@ -97,7 +143,12 @@ export default function ToolDetailPage() {
       </div>
 
       <div className="border border-gray-200 rounded-xl p-6 mb-8">
-        <h2 className="font-semibold text-lg mb-4">Try it</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-lg">Try it</h2>
+          <span className="text-sm font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
+            Cost: {tool.pricePerCall} USDC per call
+          </span>
+        </div>
         <div className="mb-4">
           <label className="text-sm text-gray-500 mb-1 block">Input</label>
           <textarea
@@ -108,14 +159,34 @@ export default function ToolDetailPage() {
           />
         </div>
         <button
-          onClick={handleTry}
-          className="bg-blue-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-blue-700 mb-4"
+          onClick={handleRun}
+          disabled={runStatus === 'loading'}
+          className="bg-blue-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-wait mb-4"
         >
-          Run (costs {tool.pricePerCall} USDC)
+          {runButtonLabel}
         </button>
+
+        {runStatus === 'wallet-required' && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-yellow-800">Connect your wallet first to run this tool.</p>
+          </div>
+        )}
+
+        {runStatus === 'loading' && (
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-gray-500">Calling gateway...</span>
+          </div>
+        )}
+
         {tryOutput && (
           <div>
-            <label className="text-sm text-gray-500 mb-1 block">Output</label>
+            <div className="flex items-center gap-2 mb-1">
+              <label className="text-sm text-gray-500">Output</label>
+              {gatewayOffline && (
+                <span className="text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded">gateway offline — example output</span>
+              )}
+            </div>
             <pre className="font-mono text-sm bg-gray-50 border border-gray-200 rounded-lg p-3 overflow-x-auto">{tryOutput}</pre>
           </div>
         )}
@@ -123,9 +194,14 @@ export default function ToolDetailPage() {
 
       <div className="border border-gray-200 rounded-xl p-6">
         <h2 className="font-semibold text-lg mb-3">Integration</h2>
+        {connected && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+            <p className="text-xs text-green-700">Connected as <span className="font-mono">{callerAddress}</span></p>
+          </div>
+        )}
         <pre className="font-mono text-sm bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-x-auto">{`curl -X POST ${tool.endpoint} \\
   -H "x-payment-signature: <tx_sig>" \\
-  -H "x-caller-pubkey: <your_pubkey>" \\
+  -H "x-caller-pubkey: ${callerAddress}" \\
   -H "Content-Type: application/json" \\
   -d '${tool.exampleInput}'`}</pre>
       </div>
