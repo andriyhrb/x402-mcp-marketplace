@@ -1,16 +1,11 @@
 use anchor_lang::prelude::*;
 
-mod constants;
-mod errors;
-mod instructions;
-mod state;
+pub mod constants;
+pub mod errors;
+pub mod instructions;
+pub mod state;
 
-use instructions::{
-    initialize::Initialize,
-    register_publisher::RegisterPublisher,
-    publish_tool::PublishTool,
-    pay_for_tool::PayForTool,
-};
+use instructions::*;
 
 declare_id!("DZEGM4VV5uoLyQaQ9HS638yTdkGVgpxvGUdCNP81qpbx");
 

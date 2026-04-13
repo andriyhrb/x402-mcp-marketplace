@@ -84,7 +84,7 @@ pub fn handler(ctx: Context<PayForTool>, payment_id: u64, num_calls: u32) -> Res
 
     // CPI: transfer to publisher
     token::transfer(
-        CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
+        CpiContext::new(ctx.accounts.token_program.key(), Transfer {
             from: ctx.accounts.caller_token.to_account_info(),
             to: ctx.accounts.publisher_token.to_account_info(),
             authority: ctx.accounts.caller.to_account_info(),
@@ -95,7 +95,7 @@ pub fn handler(ctx: Context<PayForTool>, payment_id: u64, num_calls: u32) -> Res
     // CPI: transfer commission to treasury
     if commission > 0 {
         token::transfer(
-            CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer {
+            CpiContext::new(ctx.accounts.token_program.key(), Transfer {
                 from: ctx.accounts.caller_token.to_account_info(),
                 to: ctx.accounts.treasury_token.to_account_info(),
                 authority: ctx.accounts.caller.to_account_info(),
