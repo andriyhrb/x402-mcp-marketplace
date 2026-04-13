@@ -5,7 +5,12 @@ mod errors;
 mod instructions;
 mod state;
 
-use instructions::*;
+use instructions::{
+    initialize::Initialize,
+    register_publisher::RegisterPublisher,
+    publish_tool::PublishTool,
+    pay_for_tool::PayForTool,
+};
 
 declare_id!("DZEGM4VV5uoLyQaQ9HS638yTdkGVgpxvGUdCNP81qpbx");
 
