@@ -1,0 +1,19 @@
+{
+  "name": "mcp-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "x402 MCP Marketplace Gateway — payment verification + tool proxy",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.96.3",
+    "@solana/spl-token": "^0.4.6",
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "node-fetch": "^3.3.2"
+  }
+}
