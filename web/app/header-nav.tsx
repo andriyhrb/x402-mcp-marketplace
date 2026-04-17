@@ -1,31 +1,55 @@
 'use client';
 
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
-
-const WalletMultiButton = dynamic(
-  () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
-  { ssr: false }
-);
+import { usePathname } from 'next/navigation';
+import { WalletMultiButton } from '../components/wallet-button';
 
 export function HeaderNav() {
+  const path = usePathname();
+
+  const link = (href: string, label: string) => {
+    const active = href === '/' ? path === '/' : path?.startsWith(href);
+    return (
+      <Link
+        href={href}
+        className={`relative px-3 py-1.5 text-sm transition-colors ${
+          active ? 'text-bone' : 'text-muted hover:text-bone'
+        }`}
+      >
+        {label}
+        {active && <span className="absolute left-3 right-3 -bottom-[1px] h-px bg-lime" />}
+      </Link>
+    );
+  };
+
   return (
-    <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="font-semibold text-lg tracking-tight">
-            <span className="text-blue-600">x402</span> MCP
+    <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/70 backdrop-blur-xl">
+      <div className="max-w-[1280px] mx-auto px-8 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-10">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="relative w-7 h-7">
+              <span className="absolute inset-0 bg-lime rounded-sm" />
+              <span className="absolute inset-0 border border-bone/30 rounded-sm rotate-12" />
+              <span className="absolute inset-[6px] bg-ink rounded-[2px]" />
+              <span className="absolute inset-[10px] bg-lime rounded-[1px]" />
+            </span>
+            <span className="font-display font-bold tracking-tight text-[17px]">
+              x402<span className="text-lime">·</span>mcp
+            </span>
           </Link>
-          <nav className="flex gap-1">
-            <Link href="/" className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-50">
-              Browse
-            </Link>
-            <Link href="/publish" className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-50">
-              Publish
-            </Link>
+          <nav className="hidden md:flex items-center gap-1">
+            {link('/', 'Marketplace')}
+            {link('/usage', 'Usage')}
+            {link('/publish', 'Publish')}
           </nav>
         </div>
-        <WalletMultiButton className="!bg-gray-900 !text-white !text-sm !font-medium !px-4 !py-2 !rounded-lg hover:!bg-gray-800 !h-auto" />
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2 text-xs text-muted">
+            <span className="w-1.5 h-1.5 rounded-full bg-mint pulse-dot" />
+            <span className="font-mono">devnet · 14.3k calls / 24h</span>
+          </div>
+          <WalletMultiButton />
+        </div>
       </div>
     </header>
   );
