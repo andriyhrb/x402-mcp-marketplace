@@ -5,7 +5,8 @@
  * Handles timeouts and basic error wrapping.
  */
 
-const PROXY_TIMEOUT_MS = parseInt(process.env.PROXY_TIMEOUT_MS || '15000', 10);
+const _rawTimeout = parseInt(process.env.PROXY_TIMEOUT_MS || '15000', 10);
+const PROXY_TIMEOUT_MS = Number.isFinite(_rawTimeout) && _rawTimeout > 0 ? _rawTimeout : 15000;
 
 /**
  * Proxy a tool call to the MCP endpoint.
