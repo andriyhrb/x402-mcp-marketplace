@@ -2,20 +2,383 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Syne:wght@500;600;700;800&display=swap');
 
 :root {
-  --bg: #ffffff;
-  --bg-secondary: #f9fafb;
-  --border: #e5e7eb;
-  --text: #111827;
-  --text-secondary: #6b7280;
-  --accent: #2563eb;
-  --accent-light: #eff6ff;
+  --ink: #0a0a0e;
+  --ink-1: #101017;
+  --ink-2: #171722;
+  --ink-3: #22222f;
+  --line: #2a2a38;
+  --line-soft: #1d1d28;
+  --bone: #f4ece0;
+  --bone-dim: #c9c3b7;
+  --muted: #7f7e8d;
+  --lime: #d4ff3a;
+  --lime-ink: #0a0a0e;
+  --coral: #ff5a36;
+  --violet: #a78bfa;
+  --mint: #7ef0c9;
+
+  --cursor-x: 50vw;
+  --cursor-y: 50vh;
+}
+
+html, body {
+  background: var(--ink);
+  color: var(--bone);
+  font-family: 'Geist', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  font-family: 'Geist', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* Grain overlay */
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.35 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Ambient page glow following cursor — no transition (mousemove = 120Hz) */
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(600px circle at var(--cursor-x) var(--cursor-y),
+      rgba(212, 255, 58, 0.06),
+      transparent 45%),
+    radial-gradient(900px circle at calc(var(--cursor-x) + 300px) calc(var(--cursor-y) - 200px),
+      rgba(167, 139, 250, 0.04),
+      transparent 50%);
+}
+
+/* Scroll progress */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: var(--scroll, 0%);
+  background: linear-gradient(90deg, var(--lime), var(--coral));
+  z-index: 1000;
+  transition: width 0.05s linear;
+}
+
+/* Custom cursor */
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 1001;
+  transform: translate3d(-50%, -50%, 0);
+  will-change: transform, width, height;
+  opacity: 1;
+  transition-property: opacity;
+  transition-duration: 0.2s;
+}
+.cursor-dot {
+  width: 6px; height: 6px;
+  background: var(--lime);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(212, 255, 58, 0.7);
+}
+.cursor-ring {
+  width: 34px; height: 34px;
+  border: 1px solid rgba(244, 236, 224, 0.4);
+  border-radius: 50%;
+  backdrop-filter: blur(2px);
+  transition: width 0.25s cubic-bezier(.2,.8,.2,1), height 0.25s cubic-bezier(.2,.8,.2,1), border-color 0.2s, background 0.25s, opacity 0.2s;
+}
+.cursor-ring.is-hover {
+  width: 60px; height: 60px;
+  border-color: var(--lime);
+  background: rgba(212, 255, 58, 0.08);
+}
+.cursor-ring.is-text {
+  width: 4px; height: 22px;
+  border-radius: 2px;
+  border: none;
+  background: var(--lime);
+  opacity: 0.6;
+}
+.cursor-ring.is-click {
+  width: 22px; height: 22px;
+  background: rgba(212, 255, 58, 0.2);
+}
+.cursor-hidden .cursor-dot,
+.cursor-hidden .cursor-ring {
+  opacity: 0;
+}
+
+/* Selection */
+::selection {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px; height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 20px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--lime);
+}
+
+/* Tilt card */
+.tilt {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.2s cubic-bezier(.2,.8,.2,1);
+}
+.tilt-spot {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: radial-gradient(260px circle at var(--sx, 50%) var(--sy, 50%),
+    rgba(212, 255, 58, 0.18),
+    transparent 50%);
+}
+.tilt:hover .tilt-spot {
+  opacity: 1;
+}
+
+/* Marquee */
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.marquee-track {
+  animation: marquee 40s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Kinetic text gradient */
+.kinetic {
+  background: linear-gradient(110deg,
+    var(--bone) 0%,
+    var(--bone) 35%,
+    var(--lime) 50%,
+    var(--bone) 65%,
+    var(--bone) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sheen 6s linear infinite;
+}
+@keyframes sheen {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* Reveal */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition: opacity 0.7s cubic-bezier(.2,.8,.2,1), transform 0.7s cubic-bezier(.2,.8,.2,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+/* No-JS fallback: reveal everything immediately */
+@media (scripting: none) {
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* Pulse dot */
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(126, 240, 201, 0.6); }
+  50% { box-shadow: 0 0 0 8px rgba(126, 240, 201, 0); }
+}
+.pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+/* Ticker chip */
+.tick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(16, 16, 23, 0.6);
+  font-size: 12px;
+  color: var(--bone-dim);
+  white-space: nowrap;
+}
+
+/* Inputs — native cursor restored so users can actually see where to type */
+input, textarea, select, [contenteditable='true'] {
+  background-color: var(--ink-1);
+  color: var(--bone);
+  color-scheme: dark;
+}
+input, textarea, [contenteditable='true'] {
+  cursor: text;
+}
+select {
+  cursor: pointer;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--muted);
+}
+
+/* Buttons/anchors: hide native cursor (custom cursor replaces) */
+button, a {
+  cursor: none;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--lime) !important;
+  box-shadow: 0 0 0 3px rgba(212, 255, 58, 0.15);
+}
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
+}
+
+/* Wallet adapter override */
+.wallet-adapter-button {
+  background: var(--lime) !important;
+  color: var(--ink) !important;
+  font-family: 'Geist', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.wallet-adapter-button:not([disabled]):hover {
+  background: var(--bone) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px -10px rgba(212, 255, 58, 0.5);
+}
+.wallet-adapter-modal-wrapper {
+  background: var(--ink-1) !important;
+}
+.wallet-adapter-modal-title {
+  color: var(--bone) !important;
+}
+
+/* Blob */
+.blob {
+  position: absolute;
+  width: 520px; height: 520px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: transform 0.3s ease;
+}
+.blob-1 {
+  background: radial-gradient(circle, var(--lime), transparent 60%);
+  top: -120px; left: -120px;
+}
+.blob-2 {
+  background: radial-gradient(circle, var(--violet), transparent 60%);
+  top: 20%; right: -180px;
+}
+.blob-3 {
+  background: radial-gradient(circle, var(--coral), transparent 60%);
+  bottom: -200px; left: 30%;
+  opacity: 0.35;
+}
+
+/* Submit-for-review "soon…" button */
+.soon-btn {
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+}
+.soon-btn .soon-label {
+  transition: filter 0.35s cubic-bezier(.2,.8,.2,1), opacity 0.3s ease, transform 0.35s ease;
+  filter: blur(0);
+  opacity: 1;
+}
+.soon-btn .soon-overlay {
+  opacity: 0;
+  filter: blur(6px);
+  transform: scale(0.96);
+  transition: opacity 0.3s ease, filter 0.4s cubic-bezier(.2,.8,.2,1), transform 0.4s cubic-bezier(.2,.8,.2,1);
+  pointer-events: none;
+}
+.soon-btn:hover {
+  background: rgba(212, 255, 58, 0.04);
+}
+.soon-btn:hover .soon-label {
+  filter: blur(8px);
+  opacity: 0;
+  transform: scale(1.02);
+}
+.soon-btn:hover .soon-overlay {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+@keyframes soon-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+.soon-dot {
+  display: inline-block;
+  animation: soon-dot-bounce 1.2s ease-in-out infinite;
+}
+
+/* Reduced motion — disable every non-essential animation */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .marquee-track { animation: none !important; }
+  .kinetic { animation: none !important; color: var(--bone); background: none; -webkit-background-clip: unset; background-clip: unset; }
+  .pulse-dot { animation: none !important; }
+  .soon-dot { animation: none !important; }
+  .reveal { opacity: 1; transform: none; }
+  .blob { opacity: 0.3; }
+  .ambient { display: none; }
+}
+
+/* Touch devices — custom cursor useless */
+@media (hover: none) {
+  body { cursor: auto; }
+  .cursor-dot, .cursor-ring, .ambient { display: none; }
+  button, a { cursor: pointer; }
 }
