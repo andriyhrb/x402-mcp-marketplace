@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react';
-
-type PublishStatus = 'idle' | 'publishing' | 'success';
+import { Reveal } from '../../components/reveal';
 
 export default function PublishPage() {
   const { publicKey, connected } = useWallet();
@@ -13,163 +12,158 @@ export default function PublishPage() {
   const [endpoint, setEndpoint] = useState('');
   const [price, setPrice] = useState('0.001');
   const [category, setCategory] = useState('Data');
-  const [publishStatus, setPublishStatus] = useState<PublishStatus>('idle');
+  const [toast, setToast] = useState<string | null>(null);
 
-  const canPublish = connected && name.trim() && description.trim() && endpoint.trim();
-
-  const handlePublish = async () => {
-    if (!canPublish) return;
-
-    setPublishStatus('publishing');
-
-    // Simulate on-chain registration (2s delay for tx confirm)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-    // Save to localStorage so it appears on marketplace
-    const newTool = {
-      id: slug,
-      name: name.trim(),
-      description: description.trim(),
-      category,
-      pricePerCall: parseFloat(price) || 0.001,
-      totalCalls: 0,
-      rating: 0,
-      publisher: walletAddress ? walletAddress.slice(0, 4) + '...' + walletAddress.slice(-4) : 'unknown',
-    };
-    const existing = JSON.parse(localStorage.getItem('x402_published_tools') || '[]');
-    existing.push(newTool);
-    localStorage.setItem('x402_published_tools', JSON.stringify(existing));
-
-    setPublishStatus('success');
-  };
+  useEffect(() => {
+    if (!toast) return;
+    const t = window.setTimeout(() => setToast(null), 3200);
+    return () => window.clearTimeout(t);
+  }, [toast]);
 
   const walletAddress = publicKey?.toBase58() || '';
+  const canPublish = connected && name.trim() && description.trim() && endpoint.trim();
 
-  if (publishStatus === 'success') {
-    return (
-      <div className="max-w-2xl mx-auto px-6 py-16 text-center">
-        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight mb-2">Tool Published</h1>
-        <p className="text-gray-500 text-sm mb-6">Your tool has been registered on the marketplace.</p>
+  const priceNum = Number.isFinite(parseFloat(price)) ? Math.max(0.0001, parseFloat(price)) : 0.001;
 
-        <div className="border border-gray-200 rounded-xl p-5 text-left mb-6 inline-block w-full max-w-md">
-          <div className="space-y-3">
-            <div>
-              <div className="text-xs text-gray-400">Name</div>
-              <div className="font-semibold">{name}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Category</div>
-              <div className="text-sm">{category}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Price</div>
-              <div className="text-sm">{price} USDC / call</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Endpoint</div>
-              <div className="font-mono text-sm truncate">{endpoint}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Publisher</div>
-              <div className="font-mono text-sm truncate">{walletAddress}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-400">Transaction</div>
-              <span className="text-sm text-gray-500 italic">Transaction simulated (devnet demo)</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-3 justify-center">
-          <Link href="/" className="bg-gray-900 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800">
-            View on marketplace
-          </Link>
-          <button
-            onClick={() => {
-              setPublishStatus('idle');
-              setName('');
-              setDescription('');
-              setEndpoint('');
-              setPrice('0.001');
-              setCategory('Data');
-            }}
-            className="border border-gray-200 text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-50"
-          >
-            Publish another
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const onSoonClick = () => {
+    if (!connected) {
+      setToast('Connect a wallet first — waitlist opens with v1.0');
+      return;
+    }
+    if (!canPublish) {
+      setToast('Fill name, description and endpoint to join the queue');
+      return;
+    }
+    setToast(`Thanks — we\u2019ll reach out to ${walletAddress.slice(0, 4)}…${walletAddress.slice(-4)} when the registry opens`);
+  };
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold tracking-tight mb-2">Publish a Tool</h1>
-      <p className="text-gray-500 text-sm mb-8">Register your MCP tool on the marketplace and start earning USDC per call.</p>
+    <div className="max-w-2xl mx-auto px-8 py-16">
+      <Reveal>
+        <span className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted">/ Publish</span>
+        <h1 className="font-display font-bold tracking-tight text-5xl md:text-6xl mt-3 mb-4">
+          Ship a tool.<br />
+          <span className="text-lime italic">Get paid.</span>
+        </h1>
+        <p className="text-bone-dim mb-10 max-w-lg">
+          Register your MCP tool on-chain and start earning USDC per call. No Stripe, no middlemen, no monthly invoice.
+          <span className="block mt-2 text-xs text-muted">Open publishing launches with v1.0 — submit your details below to join the waitlist.</span>
+        </p>
+      </Reveal>
 
       <div className="space-y-5">
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">Tool Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Awesome Tool" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-400" />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="What does your tool do?" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-400" />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">MCP Endpoint URL</label>
-          <input value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="https://your-server.com/mcp" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-mono outline-none focus:border-blue-400" />
-        </div>
+        <Field label="Tool name">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Solana Balance Checker" className="input" />
+        </Field>
+        <Field label="Description">
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="What does your tool do?" className="input" />
+        </Field>
+        <Field label="MCP endpoint URL">
+          <input value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="https://your-server.com/mcp" className="input font-mono" />
+        </Field>
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Price per Call (USDC)</label>
-            <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" step="0.001" min="0.001" className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-400" />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Category</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-400 bg-white">
+          <Field label="Price (USDC)">
+            <input
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              type="number"
+              step="0.001"
+              min="0.0001"
+              className="input"
+              onBlur={() => setPrice(priceNum.toString())}
+            />
+          </Field>
+          <Field label="Category">
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className="input">
               {['Data', 'DeFi', 'Developer', 'NFT', 'Analytics', 'Security'].map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-          </div>
+          </Field>
         </div>
 
         {connected && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <p className="text-xs text-green-700">Publishing as <span className="font-mono">{walletAddress}</span></p>
+          <div className="bg-mint/10 border border-mint/30 text-mint text-xs rounded-xl p-3 font-mono">
+            waitlisting as · {walletAddress}
           </div>
         )}
 
         <button
-          onClick={handlePublish}
-          disabled={!canPublish || publishStatus === 'publishing'}
-          className="w-full bg-gray-900 text-white font-medium py-3 rounded-lg hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+          type="button"
+          onClick={onSoonClick}
+          aria-label="Submit for review — coming soon"
+          className="soon-btn group relative w-full flex items-center justify-center gap-3 font-semibold py-4 rounded-full text-sm overflow-hidden bg-ink-1 border border-line text-bone hover:border-lime transition-colors"
         >
-          {publishStatus === 'publishing'
-            ? 'Publishing...'
-            : connected
-              ? 'Publish Tool'
-              : 'Connect wallet to publish'
-          }
+          <span className="soon-label inline-flex items-center gap-3">
+            Submit for review
+            <span className="w-6 h-6 rounded-full border border-line flex items-center justify-center group-hover:border-lime group-hover:bg-lime transition-colors">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M1 5h8M5 1l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-bone group-hover:text-ink transition-colors" />
+              </svg>
+            </span>
+          </span>
+          <span className="soon-overlay absolute inset-0 flex items-center justify-center font-display font-bold tracking-tight text-lime text-lg">
+            soon<span className="inline-flex ml-0.5">
+              <span className="soon-dot" style={{ animationDelay: '0ms' }}>.</span>
+              <span className="soon-dot" style={{ animationDelay: '180ms' }}>.</span>
+              <span className="soon-dot" style={{ animationDelay: '360ms' }}>.</span>
+            </span>
+          </span>
         </button>
 
-        {publishStatus === 'publishing' && (
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm text-gray-500">Registering on-chain...</span>
-          </div>
-        )}
+        <p className="text-xs text-muted text-center">
+          Submissions are reviewed before being listed on-chain. Open registry launches with v1.0.
+        </p>
 
-        <p className="text-xs text-gray-400 text-center">Publishing registers your tool on-chain via the marketplace program. A small SOL fee applies for account creation.</p>
+        <Link href="/" className="block text-center text-xs text-muted hover:text-bone mt-4">
+          ← cancel
+        </Link>
       </div>
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-[calc(100%-32px)] bg-ink-1 border border-line rounded-2xl px-5 py-3.5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)] text-sm text-bone flex items-start gap-3 animate-[toast-in_0.3s_cubic-bezier(.2,.8,.2,1)]"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-lime flex-shrink-0 mt-2 pulse-dot" />
+          <span className="flex-1 leading-relaxed">{toast}</span>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="text-muted hover:text-bone text-lg leading-none flex-shrink-0"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <style jsx>{`
+        .input {
+          width: 100%;
+          background: var(--ink-1);
+          border: 1px solid var(--line-soft);
+          border-radius: 12px;
+          padding: 12px 16px;
+          font-size: 14px;
+          color: var(--bone);
+        }
+        .input::placeholder { color: var(--muted); }
+        @keyframes toast-in {
+          from { opacity: 0; transform: translate(-50%, 20px); }
+          to { opacity: 1; transform: translate(-50%, 0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-[11px] font-mono uppercase tracking-widest text-muted mb-2 block">{label}</label>
+      {children}
     </div>
   );
 }
