@@ -12,13 +12,13 @@ pub enum MarketError {
     InvalidRating,
     #[msg("Insufficient USDC balance")]
     InsufficientBalance,
-    #[msg("Math overflow")]
+    #[msg("Arithmetic overflow in fee split")]
     MathOverflow,
     #[msg("Token mint does not match USDC mint")]
     InvalidMint,
     #[msg("Commission rate exceeds 100%")]
     InvalidCommission,
-    #[msg("Description exceeds maximum length")]
+    #[msg("Tool description is too verbose")]
     DescriptionTooLong,
     #[msg("Endpoint URL exceeds maximum length")]
     EndpointTooLong,
