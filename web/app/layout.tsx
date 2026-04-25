@@ -1,5 +1,5 @@
 import './globals.css';
-import { WalletContextProvider } from './providers';
+import { WalletContextProvider } from './wallet-context';
 import { HeaderNav } from './header-nav';
 import { CustomCursor } from '../components/custom-cursor';
 import { ScrollProgress } from '../components/scroll-progress';
