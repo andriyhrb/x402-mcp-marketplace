@@ -56,11 +56,16 @@ app.use((req, res, next) => {
   res.setHeader('X-RateLimit-Limit', RATE_LIMIT);
   res.setHeader('X-RateLimit-Remaining', Math.max(0, RATE_LIMIT - bucket.count));
   if (bucket.count > RATE_LIMIT) {
+    const retryAfterSec = Math.max(1, Math.ceil((bucket.reset - now) / 1000));
+    res.setHeader('Retry-After', retryAfterSec);
+    res.setHeader('X-RateLimit-Reset', Math.ceil(bucket.reset / 1000));
     return res.status(429).json({
       error: 'Too Many Requests',
-      message: `Rate limit exceeded (${RATE_LIMIT} req/min)`,
+      message: `Rate limit exceeded (${RATE_LIMIT} req/min). Retry in ${retryAfterSec}s.`,
+      retryAfter: retryAfterSec,
     });
   }
+  res.setHeader('X-RateLimit-Reset', Math.ceil(bucket.reset / 1000));
   next();
 });
 
