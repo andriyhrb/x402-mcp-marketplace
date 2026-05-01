@@ -84,6 +84,17 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'mcp-gateway' });
 });
 
+// Liveness probe — used by docker / k8s
+app.get('/healthz', (_req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'mcp-gateway',
+    uptime: Math.floor(process.uptime()),
+    version: process.env.npm_package_version || '0.0.0',
+    rateLimit: { limit: RATE_LIMIT, windowMs: RATE_WINDOW_MS },
+  });
+});
+
 // JSON body parser error guard
 app.use((err, _req, res, next) => {
   if (err && err.type === 'entity.too.large') {
