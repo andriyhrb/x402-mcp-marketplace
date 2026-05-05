@@ -83,4 +83,6 @@ Status codes: `402` payment required, `400` missing caller pubkey, `404` tool/ro
 
 ## License
 
-MIT
+The platform code in this repo — registry program, gateway, and web frontend — ships under MIT. See [LICENSE](LICENSE) for the full text.
+
+Tools published to the registry are third-party software and stay under whatever license their publishers ship them with. The marketplace does not relicense or sublicense vendor tools; it only brokers discovery, payment, and the MCP call. If you list a tool, declare its license in the tool metadata so callers know what they are buying access to.
