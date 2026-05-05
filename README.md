@@ -13,7 +13,7 @@ Browse tools → pay USDC per call → use tool via MCP protocol.
 - **`/publish`** — waitlist form (open registry launches with v1.0)
 - **`/tool/[id]`** — tool detail with on-page Try-it + copy-to-clipboard curl
 
-## Stack
+## Platform components
 
 - Anchor (Rust) — payment escrow and tool registry
 - Next.js 14 (app router) — marketplace frontend
@@ -34,7 +34,7 @@ curl https://gateway-production-0b26.up.railway.app/health
 
 A worked example with `register_tool` + a minimal MCP echo server lives in `examples/echo-tool/`. The local-first instructions below remain the recommended path during waitlist.
 
-## Development
+## Local dev
 
 ```bash
 # 1. Anchor program
