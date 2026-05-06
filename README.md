@@ -20,6 +20,20 @@ Browse tools → pay USDC per call → use tool via MCP protocol.
 - Node.js / Express gateway — payment verification + MCP proxy
 - MCP SDK — JSON-RPC 2.0 over HTTP
 
+## Quickstart for publishers
+
+The hosted gateway is reachable at `https://gateway-production-0b26.up.railway.app` and the marketplace UI at `https://x402mcp.vercel.app`. While `/publish` is gated behind a waitlist for v1, the registry contract is open — you can list a tool by calling `register_tool` directly:
+
+```bash
+# Discover what is already on the registry
+curl https://gateway-production-0b26.up.railway.app/v1/tools | jq '.[] | {id,name,price_usdc}'
+
+# Verify health (should print {"status":"ok","commit":"<sha>"})
+curl https://gateway-production-0b26.up.railway.app/health
+```
+
+A worked example with `register_tool` + a minimal MCP echo server lives in `examples/echo-tool/`. The local-first instructions below remain the recommended path during waitlist.
+
 ## Development
 
 ```bash
