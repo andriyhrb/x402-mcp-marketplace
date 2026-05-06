@@ -77,7 +77,7 @@ setInterval(() => {
   }
 }, 5 * 60_000).unref();
 
-const PORT = parseInt(process.env.GATEWAY_PORT || '4000', 10);
+const PORT = parseInt(process.env.PORT || process.env.GATEWAY_PORT || '4000', 10);
 
 // Health check
 app.get('/health', (_req, res) => {
