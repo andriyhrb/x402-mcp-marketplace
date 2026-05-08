@@ -49,11 +49,13 @@ export function TiltCard({ children, className = '', max = 8, onClick }: Props) 
     const py = (e.clientY - r.top) / r.height;
     const rx = (0.5 - py) * max;
     const ry = (px - 0.5) * max;
+    // Lift the card 4px on hover — subtle z-axis cue that pairs with the tilt
+    // and matches the "interactive surface" feel the rest of the marketplace uses.
     cancelAnimationFrame(raf.current);
     raf.current = requestAnimationFrame(() => {
       el.style.setProperty('--sx', `${px * 100}%`);
       el.style.setProperty('--sy', `${py * 100}%`);
-      el.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
+      el.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(4px)`;
     });
   };
 
