@@ -77,7 +77,7 @@ setInterval(() => {
   }
 }, 5 * 60_000).unref();
 
-const PORT = parseInt(process.env.PORT || process.env.GATEWAY_PORT || '4000', 10);
+const PORT = parseInt(process.env.GATEWAY_PORT || '4000', 10);
 
 // Health check
 app.get('/health', (_req, res) => {
@@ -124,19 +124,9 @@ app.post('/v1/tools/:toolId/call', async (req, res) => {
   const callerPubkey = req.headers['x-caller-pubkey'];
 
   if (!paymentSignature) {
-    // x402 spec asks for a structured body so MCP clients can auto-prompt
-    // a payment dialog. Include amount + recipient + memo so the wallet
-    // knows what to sign without a second roundtrip to /v1/tools/:id.
     return res.status(402).json({
       error: 'Payment Required',
       message: 'Include x-payment-signature header with pay_for_tool transaction signature',
-      x402: {
-        scheme: 'solana-x402-v1',
-        toolId,
-        callerHeader: 'x-caller-pubkey',
-        signatureHeader: 'x-payment-signature',
-        docs: 'https://x402mcp.vercel.app/docs/payment-flow',
-      },
     });
   }
 

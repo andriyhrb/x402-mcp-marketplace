@@ -7,16 +7,6 @@ import { ScrollProgress } from '../components/scroll-progress';
 export const metadata = {
   title: 'x402 · MCP Marketplace for autonomous agents',
   description: 'Pay-per-call AI tool marketplace on Solana. USDC micropayments, on-chain registry, instant gateway.',
-  openGraph: {
-    title: 'x402 · MCP Marketplace',
-    description: 'Pay-per-call AI tools. Micro USDC. Discoverable via MCP.',
-    type: 'website',
-    images: ['/og.svg'],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    images: ['/og.svg'],
-  },
 };
 
 export const viewport = {
