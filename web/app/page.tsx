@@ -368,6 +368,7 @@ export default function MarketplacePage() {
             <span className="text-muted/60">docs · soon</span>
             <span className="text-muted/60">github · soon</span>
             <a href="https://modelcontextprotocol.io/" target="_blank" rel="noreferrer" className="hover:text-bone">mcp spec ↗</a>
+            <a href="https://www.x402.org/" target="_blank" rel="noreferrer" className="hover:text-bone">x402 ↗</a>
           </div>
         </div>
       </footer>
