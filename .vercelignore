@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+target
+.anchor
+test-ledger
+.next
+**/.next
+out
+**/out
+programs
+gateway
+demo-tools
+tests
+docs
+examples
+*-keypair.json
+*.tsbuildinfo
